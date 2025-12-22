@@ -3,7 +3,8 @@ import React from 'react'
 import Link from 'next/link'
 import Snowfall from 'react-snowfall'
 import Navbar from './components/Navbar'
-import RotatingCube from "./components/Cube";
+import HeroScene from "./components/HeroScene";
+ import { Skeleton } from "@/components/ui/skeleton"
 
 const HomePage = () => {
   return (
@@ -18,32 +19,32 @@ const HomePage = () => {
 
       {/* Hero Section */}
       <main className="relative z-10 flex-1">
-      
         <section className="max-w-7xl mx-auto px-6 py-20 md:py-32">
-        
-          <div className="text-center max-w-4xl mx-auto">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
-              </span>
-              <span className="text-violet-400 text-sm font-medium">AI-Powered Learning Platform</span>
-            </div>
-            
-            {/* Headline */}
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-violet-200 to-fuchsia-200 bg-clip-text text-transparent leading-tight">
-              Learn Smarter,<br />Not Harder
-            </h2>
-            
-            {/* Subheadline */}
-            <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Discover personalized YouTube videos and Udemy courses tailored to your skill level. 
-              Let AI guide your learning journey.
-            </p>
-            
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
+            {/* Left side - Text content */}
+            <div className="flex-1 text-center lg:text-left max-w-2xl">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
+                </span>
+                <span className="text-violet-400 text-sm font-medium">AI-Powered Learning Platform</span>
+              </div>
+              
+              {/* Headline */}
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-violet-200 to-fuchsia-200 bg-clip-text text-transparent leading-tight">
+                Learn Smarter,<br />Not Harder
+              </h2>
+              
+              {/* Subheadline */}
+              <p className="text-lg md:text-xl text-slate-400 mb-10 leading-relaxed">
+                Discover personalized YouTube videos and Udemy courses tailored to your skill level. 
+                Let AI guide your learning journey.
+              </p>
+              
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 mb-12">
               <Link 
                 href="/suggestions" 
                 className="group w-full sm:w-auto px-8 py-4 text-base font-semibold bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white rounded-xl transition-all no-underline hover:shadow-xl hover:shadow-violet-500/30 hover:-translate-y-0.5 flex items-center justify-center gap-2"
@@ -62,21 +63,27 @@ const HomePage = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 max-w-lg mx-auto">
-              <div className="text-center">
+            <div className="grid grid-cols-3 gap-8 max-w-lg mx-auto lg:mx-0">
+              <div className="text-center lg:text-left">
                 <div className="text-2xl md:text-3xl font-bold text-white mb-1">10K+</div>
                 <div className="text-xs md:text-sm text-slate-500">Active Learners</div>
               </div>
-              <div className="text-center">
+              <div className="text-center lg:text-left">
                 <div className="text-2xl md:text-3xl font-bold text-white mb-1">50K+</div>
                 <div className="text-xs md:text-sm text-slate-500">Courses Found</div>
               </div>
-              <div className="text-center">
+              <div className="text-center lg:text-left">
                 <div className="text-2xl md:text-3xl font-bold text-white mb-1">98%</div>
                 <div className="text-xs md:text-sm text-slate-500">Satisfaction</div>
               </div>
             </div>
           </div>
+
+          {/* Right side - 3D Scene */}
+          <div className="flex-1 w-full h-[300px] md:h-[250px] lg:h-[450px] overflow-hidden">
+            <HeroScene />
+          </div>
+        </div>
         </section>
 
         {/* Features Section */}
@@ -198,6 +205,7 @@ const HomePage = () => {
             </div>
           </div>
         </div>
+   
       </footer>
     </div>
   )
