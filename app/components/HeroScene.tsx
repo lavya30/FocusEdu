@@ -101,7 +101,7 @@ export default function HeroScene() {
           <CameraShake yawFrequency={0.05} pitchFrequency={0.05} rollFrequency={0.05} intensity={0.2} />
 
           {/* 4. Cinematic Post-Processing */}
-          <EffectComposer disableNormalPass>
+          <EffectComposer enableNormalPass={false}>
             <Bloom
               luminanceThreshold={1}
               intensity={0.8}
