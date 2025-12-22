@@ -7,7 +7,7 @@ const Loading = () => {
       {/* Navbar Skeleton */}
       <nav className="border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Skeleton className="h-8 w-32 bg-slate-800" />
+          <Skeleton className="h-8 w-32 bg-slate-800" / >
           <div className="hidden md:flex items-center gap-6">
             <Skeleton className="h-4 w-20 bg-slate-800" />
             <Skeleton className="h-4 w-20 bg-slate-800" />
