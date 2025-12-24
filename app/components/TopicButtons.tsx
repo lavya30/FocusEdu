@@ -1,17 +1,19 @@
 // components/TopicButtons.tsx
 'use client';
-
+import { FaPython } from "react-icons/fa";
+import { IoLogoJavascript } from "react-icons/io5";
+import { FaReact } from "react-icons/fa";
 interface Props {
   onTopicClick: (topic: string) => void;
 }
 
 const POPULAR_TOPICS = [
-  { name: 'React', icon: '⚛️', color: 'from-cyan-500 to-blue-500' },
-  { name: 'Python', icon: '🐍', color: 'from-yellow-500 to-green-500' },
+  { name: 'React', icon: <FaReact color="#ffffff"/>, color: 'from-cyan-500 to-blue-500' },
+  { name: 'Python', icon: <FaPython color="#ffffff"/>, color: 'from-yellow-500 to-green-500' },
   { name: 'Machine Learning', icon: '🤖', color: 'from-orange-500 to-red-500' },
   { name: 'Data Science', icon: '📊', color: 'from-teal-500 to-emerald-500' },
   { name: 'Web Development', icon: '🌐', color: 'from-pink-500 to-rose-500' },
-  { name: 'JavaScript', icon: '💛', color: 'from-yellow-400 to-amber-500' },
+  { name: 'JavaScript', icon: <IoLogoJavascript color="#ffffff"/>, color: 'from-yellow-400 to-amber-500' },
   { name: 'AI & Deep Learning', icon: '🧠', color: 'from-purple-500 to-violet-500' },
   { name: 'Cloud Computing', icon: '☁️', color: 'from-blue-500 to-indigo-500' }
 ];

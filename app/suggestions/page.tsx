@@ -12,6 +12,7 @@ import RecentHistory from '@/app/components/RecentHistory';
 import { YouTubeVideo, UdemyCourse, SkillLevel } from '@/lib/types';
 import { addToHistory } from '@/lib/storage';
 
+
 export default function HomePage() {
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
   const [courses, setCourses] = useState<UdemyCourse[]>([]);
