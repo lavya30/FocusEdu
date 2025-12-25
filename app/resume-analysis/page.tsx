@@ -4,6 +4,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
 import Snowfall from 'react-snowfall';
 import Navbar from '@/app/components/Navbar';
 
@@ -16,6 +18,7 @@ import {
   getDoc,
   doc,
 } from "firebase/firestore";
+import { YouTubeVideo, UdemyCourse } from '@/lib/types';
 
 
 interface AnalysisResult {
@@ -33,6 +36,25 @@ interface AnalysisResult {
   };
   tips: string[];
   summary: string;
+}
+
+interface GapAnalysisResult {
+  missingSkills: string[];
+  matchScore: number;
+  strengths: string[];
+  gaps: string[];
+}
+
+interface WeekPlan {
+  week: number;
+  skill: string;
+  youtubeVideos: YouTubeVideo[];
+  udemyCourses: UdemyCourse[];
+}
+
+interface LearningPlan {
+  weeks: WeekPlan[];
+  totalWeeks: number;
 }
 
 // Animated counter component
@@ -143,11 +165,16 @@ function ProgressBar({ score, delay = 0 }: { score: number; delay?: number }) {
 export default function ResumeAnalysisPage() {
   const router = useRouter();
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ uid: string; email: string | null } | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [resumeText, setResumeText] = useState<string>('');
+  const [jobDescription, setJobDescription] = useState<string>('');
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [gapAnalysis, setGapAnalysis] = useState<GapAnalysisResult | null>(null);
+  const [learningPlan, setLearningPlan] = useState<LearningPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -217,6 +244,20 @@ export default function ResumeAnalysisPage() {
     }
   };
 
+  const extractTextFromFile = async (file: File): Promise<string> => {
+    if (file.type === 'text/plain') {
+      return await file.text();
+    }
+    // For PDF and DOCX, we rely on the API to extract text
+    // This is just a fallback
+    try {
+      const text = await file.text();
+      return text;
+    } catch {
+      return '';
+    }
+  };
+
   const analyzeResume = async () => {
     if (!file || !user) return;
 
@@ -239,6 +280,28 @@ export default function ResumeAnalysisPage() {
       const data = await response.json();
       setAnalysis(data);
 
+      // Get extracted text from API response (if available)
+      if (data.extractedText && data.extractedText.length > 50) {
+        setResumeText(data.extractedText);
+        console.log('Resume text extracted from API, length:', data.extractedText.length);
+      } else {
+        // Fallback: try to extract from file
+        try {
+          const text = await extractTextFromFile(file);
+          if (text && text.length > 50) {
+            setResumeText(text);
+            console.log('Resume text extracted from file, length:', text.length);
+          } else {
+            console.warn('Could not extract resume text. Length:', text?.length || 0);
+            // Store a note that text extraction failed
+            setResumeText(''); // Clear it so user knows they need to paste it
+          }
+        } catch (extractErr) {
+          console.warn('Text extraction error:', extractErr);
+          setResumeText(''); // Clear it
+        }
+      }
+
       await addDoc(collection(db, "resumeAnalysis"), {
         userId: user.uid,
         email: user.email,
@@ -252,6 +315,175 @@ export default function ResumeAnalysisPage() {
       setError("Failed to analyze resume. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateLearningPlan = async () => {
+    if (!user) {
+      setError('Please log in to generate a learning plan');
+      return;
+    }
+
+    if (!resumeText || resumeText.trim().length < 50) {
+      setError('Please analyze your resume first. The resume text is required for gap analysis.');
+      return;
+    }
+
+    if (!jobDescription || jobDescription.trim().length < 50) {
+      setError('Please paste a job description (at least 50 characters)');
+      return;
+    }
+
+    setLoadingPlan(true);
+    setError(null);
+    setGapAnalysis(null);
+    setLearningPlan(null);
+
+    try {
+      // Step 1: Get gap analysis
+      console.log('Generating learning plan...', {
+        resumeTextLength: resumeText.length,
+        jobDescriptionLength: jobDescription.length,
+      });
+
+      const gapResponse = await fetch('/api/jd-gap-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resumeText: resumeText.trim(),
+          jobDescription: jobDescription.trim(),
+        }),
+      });
+
+      console.log('Gap analysis response status:', gapResponse.status);
+
+      if (!gapResponse.ok) {
+        let errorMessage = `Failed to analyze gap (Status: ${gapResponse.status})`;
+        try {
+          const errorText = await gapResponse.text();
+          if (errorText) {
+            try {
+              const errorData = JSON.parse(errorText);
+              errorMessage = errorData.error || errorData.details || errorMessage;
+              console.error('Gap analysis error details:', errorData);
+            } catch {
+              // If not JSON, use the text as error message
+              errorMessage = errorText || errorMessage;
+              console.error('Gap analysis error (non-JSON):', errorText);
+            }
+          }
+        } catch (textError) {
+          console.error('Failed to read error response:', textError);
+        }
+        throw new Error(errorMessage);
+      }
+
+      const gapData: GapAnalysisResult = await gapResponse.json();
+      setGapAnalysis(gapData);
+
+      // Step 2: Filter out generic skills that won't give good recommendations
+      const genericSkills = [
+        'Professional Development',
+        'Industry Best Practices',
+        'Advanced Problem Solving',
+        'Technical Skills',
+        'Industry Knowledge',
+        'Best Practices',
+        'Specialized Tools',
+        'Advanced Technical Skills'
+      ];
+
+      // Filter skills - remove generic ones
+      const filteredSkills = gapData.missingSkills.filter(skill => {
+        const skillLower = skill.toLowerCase();
+        return !genericSkills.some(generic => 
+          skillLower.includes(generic.toLowerCase()) || 
+          generic.toLowerCase().includes(skillLower)
+        );
+      });
+
+      // Use filtered skills, or if we have less than 4, use original but skip generic ones when fetching
+      const skillsToUse = filteredSkills.length >= 4 ? filteredSkills : gapData.missingSkills;
+      const totalWeeks = Math.min(skillsToUse.length, 6);
+
+      // Step 3: For each missing skill, fetch recommendations
+      const weeks: WeekPlan[] = [];
+      let weekNumber = 1;
+
+      for (let i = 0; i < totalWeeks; i++) {
+        const skill = skillsToUse[i];
+        
+        // Skip if it's a generic skill - don't fetch recommendations for it
+        const isGeneric = genericSkills.some(generic => {
+          const skillLower = skill.toLowerCase();
+          const genericLower = generic.toLowerCase();
+          return skillLower.includes(genericLower) || genericLower.includes(skillLower);
+        });
+
+        if (isGeneric) {
+          // Skip this skill, don't add a week for it
+          console.log(`Skipping generic skill: "${skill}"`);
+          continue;
+        }
+        
+        try {
+          const recResponse = await fetch('/api/recommendations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              topic: skill,
+              skillLevel: 'beginner' as const,
+            }),
+          });
+
+          if (recResponse.ok) {
+            const recData = await recResponse.json();
+            weeks.push({
+              week: weekNumber,
+              skill,
+              youtubeVideos: (recData.youtubeVideos || []).slice(0, 2), // 2 YouTube videos
+              udemyCourses: (recData.udemyCourses || []).slice(0, 1), // 1 Udemy course
+            });
+            weekNumber++;
+          } else {
+            // Fallback if recommendations fail - still add the week but with empty content
+            weeks.push({
+              week: weekNumber,
+              skill,
+              youtubeVideos: [],
+              udemyCourses: [],
+            });
+            weekNumber++;
+          }
+        } catch (err) {
+          console.error(`Error fetching recommendations for ${skill}:`, err);
+          weeks.push({
+            week: weekNumber,
+            skill,
+            youtubeVideos: [],
+            udemyCourses: [],
+          });
+          weekNumber++;
+        }
+      }
+
+      const plan: LearningPlan = {
+        weeks,
+        totalWeeks,
+      };
+
+      setLearningPlan(plan);
+
+    } catch (err) {
+      console.error('Learning plan generation error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate learning plan. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setLoadingPlan(false);
     }
   };
 
@@ -307,13 +539,19 @@ export default function ResumeAnalysisPage() {
             </span>
           ))}
         </div>
-        <div className="flex justify-center mb-8">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full transition"
+        <div className="flex justify-center mb-8 gap-3">
+          <Link
+            href="/dashboard"
+            className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full transition-all text-sm font-medium"
           >
-            Go to Dashboard
-          </button>
+            📊 View Dashboard
+          </Link>
+          <Link
+            href="/suggestions"
+            className="px-6 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-full transition-all border border-slate-600/50 text-sm font-medium"
+          >
+            💡 AI Suggestions
+          </Link>
         </div>
 
         {/* Upload Section */}
@@ -581,6 +819,10 @@ export default function ResumeAnalysisPage() {
                 onClick={() => {
                   setFile(null);
                   setAnalysis(null);
+                  setResumeText('');
+                  setJobDescription('');
+                  setGapAnalysis(null);
+                  setLearningPlan(null);
                 }}
                 className="px-6 py-3 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-white rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
               >
@@ -599,6 +841,238 @@ export default function ResumeAnalysisPage() {
                 Download Report
               </button>
             </div>
+          </section>
+        )}
+
+        {/* Job Description & Learning Plan Section */}
+        {analysis && (
+          <section className="space-y-8 mt-12">
+            <div className="p-6 md:p-8 bg-slate-800/30 border border-slate-700/50 rounded-3xl">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                <span className="w-10 h-10 rounded-xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center">
+                  📋
+                </span>
+                Generate Learning Plan from Job Description
+              </h2>
+              <p className="text-slate-400 mb-6">
+                Paste a job description below to get a personalized learning plan with recommended courses and videos for missing skills.
+              </p>
+
+              {!resumeText && (
+                <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+                  <p className="text-sm text-yellow-400 mb-2">
+                    ⚠️ Resume text not available. Please ensure your resume was analyzed successfully.
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    If your resume was analyzed but text extraction failed, you can manually paste your resume text below.
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {!resumeText && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Resume Text (Optional - if extraction failed)
+                    </label>
+                    <textarea
+                      value={resumeText}
+                      onChange={(e) => setResumeText(e.target.value)}
+                      placeholder="Paste your resume text here if automatic extraction failed..."
+                      className="w-full h-32 px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all resize-none"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Job Description *
+                  </label>
+                  <textarea
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    placeholder="Paste the job description here..."
+                    className="w-full h-48 px-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all resize-none"
+                  />
+                </div>
+
+                <button
+                  onClick={generateLearningPlan}
+                  disabled={loadingPlan || !jobDescription.trim() || (!resumeText || resumeText.trim().length < 50)}
+                  className="w-full px-6 py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold rounded-xl transition-all duration-200 hover:shadow-xl hover:shadow-violet-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loadingPlan ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Generating Plan...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                      </svg>
+                      Generate Learning Plan
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Gap Analysis Results */}
+            {gapAnalysis && (
+              <div className="p-6 md:p-8 bg-slate-800/30 border border-slate-700/50 rounded-3xl">
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                  <span className="w-10 h-10 rounded-xl bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center">
+                    🎯
+                  </span>
+                  Gap Analysis Results
+                </h2>
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div className="p-4 bg-slate-900/50 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-yellow-400 font-semibold">Match Score:</span>
+                      <span className={`text-2xl font-bold ${gapAnalysis.matchScore >= 70 ? 'text-emerald-400' : gapAnalysis.matchScore >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
+                        {gapAnalysis.matchScore}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-slate-900/50 rounded-xl">
+                    <div className="text-sm text-slate-400 mb-2">Missing Skills Identified</div>
+                    <div className="text-2xl font-bold text-violet-400">{gapAnalysis.missingSkills.length}</div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-3">Key Missing Skills:</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {gapAnalysis.missingSkills.map((skill, i) => (
+                        <span key={i} className="px-4 py-2 text-sm text-violet-300 bg-violet-500/10 border border-violet-500/30 rounded-lg">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Learning Plan */}
+            {learningPlan && (
+              <div className="p-6 md:p-8 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-violet-500/10 border border-violet-500/20 rounded-3xl">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                    <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/30 to-fuchsia-500/30 border border-violet-500/30 flex items-center justify-center text-lg">
+                      📚
+                    </span>
+                    Your {learningPlan.totalWeeks}-Week Learning Plan
+                  </h2>
+                </div>
+
+                <div className="space-y-6">
+                  {learningPlan.weeks.map((weekPlan) => (
+                    <div
+                      key={weekPlan.week}
+                      className="p-6 bg-slate-900/50 border border-slate-700/50 rounded-2xl hover:bg-slate-900/70 transition-all"
+                    >
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/30 to-fuchsia-500/30 border border-violet-500/30 flex items-center justify-center text-xl font-bold text-white">
+                          {weekPlan.week}
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-white">Week {weekPlan.week}</h3>
+                          <p className="text-violet-400 font-medium">{weekPlan.skill}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4 mt-4">
+                        {/* YouTube Videos */}
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                            <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                            </svg>
+                            YouTube Videos ({weekPlan.youtubeVideos.length})
+                          </h4>
+                          <div className="space-y-2">
+                            {weekPlan.youtubeVideos.length > 0 ? (
+                              weekPlan.youtubeVideos.map((video) => (
+                                <a
+                                  key={video.id}
+                                  href={video.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block p-3 bg-slate-800/50 hover:bg-slate-800/70 border border-slate-700/50 rounded-lg transition-all group"
+                                >
+                                  <div className="flex items-start gap-3">
+                                    {video.thumbnail && (
+                                      <Image
+                                        src={video.thumbnail}
+                                        alt={video.title}
+                                        width={80}
+                                        height={56}
+                                        className="w-20 h-14 object-cover rounded shrink-0"
+                                        unoptimized
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-white group-hover:text-violet-400 line-clamp-2">
+                                        {video.title}
+                                      </p>
+                                      <p className="text-xs text-slate-400 mt-1">{video.channelTitle}</p>
+                                    </div>
+                                  </div>
+                                </a>
+                              ))
+                            ) : (
+                              <p className="text-sm text-slate-500 italic">No videos available</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Udemy Courses */}
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                            <svg className="w-5 h-5 text-purple-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 0L5.81 3.573v3.574l6.189-3.574 6.191 3.574V3.573zm-.001 13.185l-6.189 3.574v3.574l6.19-3.574 6.191 3.574v-3.574z"/>
+                            </svg>
+                            Udemy Course ({weekPlan.udemyCourses.length})
+                          </h4>
+                          <div className="space-y-2">
+                            {weekPlan.udemyCourses.length > 0 ? (
+                              weekPlan.udemyCourses.map((course) => (
+                                <a
+                                  key={course.id}
+                                  href={course.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block p-3 bg-slate-800/50 hover:bg-slate-800/70 border border-slate-700/50 rounded-lg transition-all group"
+                                >
+                                  <p className="text-sm font-medium text-white group-hover:text-violet-400 line-clamp-2 mb-1">
+                                    {course.title}
+                                  </p>
+                                  <p className="text-xs text-slate-400 line-clamp-2">{course.description}</p>
+                                  {course.rating && (
+                                    <div className="flex items-center gap-1 mt-2">
+                                      <span className="text-xs text-yellow-400">★</span>
+                                      <span className="text-xs text-slate-400">{course.rating}</span>
+                                    </div>
+                                  )}
+                                </a>
+                              ))
+                            ) : (
+                              <p className="text-sm text-slate-500 italic">No courses available</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         )}
 

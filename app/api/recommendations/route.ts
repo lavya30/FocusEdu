@@ -41,12 +41,14 @@ export async function POST(request: NextRequest) {
 
     // Check if API keys are configured
     if (!YOUTUBE_API_KEY) {
-      console.error('YouTube API key is not configured');
+      console.error('YouTube API key is not configured - videos will be empty');
     }
 
     if (!GROQ_API_KEY && Groq) {
-      console.warn('Groq API key is not configured. Using fallback recommendations.');
+      console.warn('Groq API key is not configured. Using fallback recommendations for Udemy courses.');
     }
+
+    console.log(`Fetching recommendations for topic: "${topic}" at ${skillLevel} level`);
 
     // Parallel execution for better performance
     const [youtubeVideos, aiRecommendations] = await Promise.all([
@@ -55,6 +57,8 @@ export async function POST(request: NextRequest) {
         ? generateAIRecommendations(topic, skillLevel, history, starredCourses)
         : generateFallbackRecommendations(topic, skillLevel)
     ]);
+
+    console.log(`Recommendations fetched: ${youtubeVideos.length} YouTube videos, ${aiRecommendations.udemyCourses.length} Udemy courses`);
 
     return NextResponse.json({
       youtubeVideos,
@@ -78,6 +82,21 @@ async function fetchYouTubeVideos(topic: string, skillLevel: string) {
   }
 
   try {
+    // Filter out generic terms that cause bad search results
+    const genericTerms = [
+      'advanced technical skills', 'technical skills', 'industry knowledge',
+      'professional development', 'best practices', 'specialized tools',
+      'advanced problem solving', 'industry best practices'
+    ];
+
+    const topicLower = topic.toLowerCase();
+    const isGeneric = genericTerms.some(term => topicLower.includes(term));
+
+    if (isGeneric) {
+      console.warn(`Generic topic detected: "${topic}" - skipping YouTube search`);
+      return [];
+    }
+
     // Construct search query based on skill level
     const levelPrefix = {
       beginner: 'tutorial for beginners',
@@ -85,7 +104,15 @@ async function fetchYouTubeVideos(topic: string, skillLevel: string) {
       advanced: 'advanced concepts'
     }[skillLevel] || 'tutorial';
 
-    const searchQuery = `${topic} ${levelPrefix}`;
+    // Create a more specific search query for better results
+    // Remove common words that might cause irrelevant results
+    const cleanTopic = topic
+      .replace(/\b(advanced|technical|skills?|development|practices?)\b/gi, '')
+      .trim();
+
+    const searchQuery = cleanTopic ? `${cleanTopic} ${levelPrefix} tutorial course` : `${topic} programming tutorial`;
+    
+    console.log(`Fetching YouTube videos for: "${searchQuery}" (original topic: "${topic}")`);
     
     const response = await fetch(
       `https://www.googleapis.com/youtube/v3/search?` +
@@ -108,7 +135,10 @@ async function fetchYouTubeVideos(topic: string, skillLevel: string) {
       return [];
     }
 
-    return data.items.map((item: any) => ({
+    console.log(`Found ${data.items.length} YouTube videos for "${topic}"`);
+
+    // Map and return video data
+    const videos = data.items.map((item: any) => ({
       id: item.id.videoId,
       title: item.snippet.title,
       description: item.snippet.description,
@@ -117,6 +147,8 @@ async function fetchYouTubeVideos(topic: string, skillLevel: string) {
       publishedAt: item.snippet.publishedAt,
       url: `https://www.youtube.com/watch?v=${item.id.videoId}`
     }));
+
+    return videos;
 
   } catch (error) {
     console.error('YouTube API Error:', error);
@@ -228,7 +260,7 @@ function buildAIPrompt(
     : '';
 
   return `
-As an education advisor, recommend 5 Udemy courses for learning "${topic}" at ${skillLevel} level.
+As an expert education advisor, recommend 5 specific Udemy courses for learning "${topic}" at ${skillLevel} level.
 
 Context:
 ${historyContext}
@@ -239,23 +271,25 @@ Provide your response as a JSON object with this exact structure:
   "courses": [
     {
       "id": "unique-id-1",
-      "title": "Course Title",
-      "description": "Brief 2-sentence description of what the course covers",
-      "instructor": "Typical instructor expertise (e.g., 'Industry Expert' or 'Senior Developer')",
+      "title": "Specific, realistic course title (e.g., 'Complete React Developer Course 2024' or 'AWS Certified Solutions Architect Associate')",
+      "description": "Detailed 2-sentence description explaining what the course covers, what you'll learn, and what projects you'll build",
+      "instructor": "Realistic instructor name or expertise (e.g., 'Brad Traversy' or 'Senior Cloud Architect')",
       "level": "${skillLevel}",
       "url": "https://www.udemy.com/courses/search/?q=${encodeURIComponent(topic)}",
       "rating": 4.5,
       "isAiGenerated": true
     }
   ],
-  "insights": "A brief 2-3 sentence personalized insight about the user's learning path based on their topic, skill level, and history."
+  "insights": "A brief 2-3 sentence personalized insight about the user's learning path. Mention why these courses are good for ${skillLevel} learners and how they relate to the topic."
 }
 
 Important:
-- All URLs should point to Udemy's search page for the topic since we don't have direct course links
-- Make recommendations realistic and relevant to ${skillLevel} learners
-- Course titles should sound professional and realistic
+- Course titles must be SPECIFIC and REALISTIC - use actual course naming patterns from Udemy
+- Focus on practical, hands-on courses that teach "${topic}" effectively
+- Descriptions should mention specific technologies, tools, or concepts covered
+- For ${skillLevel} level, adjust complexity appropriately
+- All URLs should point to Udemy's search page: https://www.udemy.com/courses/search/?q=${encodeURIComponent(topic)}
+- Make recommendations sound like real, popular Udemy courses
 - If user history shows progression, acknowledge that in insights
-- Keep descriptions concise and actionable
 `.trim();
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import {
@@ -180,17 +181,22 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-slate-950 text-white">
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-6 py-10">
-        <h1 className="text-4xl font-bold mb-6">📊 Resume Dashboard</h1>
-        <div className="flex items-center justify-between mb-6">
-          <div />
+      <main className="max-w-6xl mx-auto px-6 py-10 pt-24">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+          <h1 className="text-4xl font-bold">📊 Resume Dashboard</h1>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push('/github-analysis')}
-              className="px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white rounded-lg"
+            <Link
+              href="/resume-analysis"
+              className="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-lg transition-all border border-slate-600/50 text-sm font-medium"
             >
-              Go to GitHub Analysis
-            </button>
+              Resume Analysis
+            </Link>
+            <Link
+              href="/github-analysis"
+              className="px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white rounded-lg transition-all text-sm font-medium"
+            >
+              GitHub Analysis
+            </Link>
           </div>
         </div>
 

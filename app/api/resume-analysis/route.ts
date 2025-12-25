@@ -390,7 +390,11 @@ export async function POST(request: NextRequest) {
       const cleanedResult = result.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const analysis: AnalysisResult = JSON.parse(cleanedResult);
       
-      return NextResponse.json(analysis);
+      // Include extracted text for JD gap analysis
+      return NextResponse.json({
+        ...analysis,
+        extractedText: text, // Include extracted text for client-side JD analysis
+      });
       
     } catch (llmError) {
       console.error('LLM analysis error, falling back to rule-based:', llmError);
@@ -420,7 +424,11 @@ export async function POST(request: NextRequest) {
         summary,
       };
       
-      return NextResponse.json(fallbackResult);
+      // Include extracted text for JD gap analysis
+      return NextResponse.json({
+        ...fallbackResult,
+        extractedText: text, // Include extracted text for client-side JD analysis
+      });
     }
     
   } catch (error) {

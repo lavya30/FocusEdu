@@ -1,9 +1,10 @@
-// app/page.tsx
+// app/suggestions/page.tsx
 'use client';
 
 import { useState } from 'react';
 import Snowfall from 'react-snowfall'
 import Link from 'next/link';
+import Navbar from '@/app/components/Navbar';
 import SearchBar from '@/app/components/SearchBar';
 import TopicButtons from '@/app/components/TopicButtons';
 import VideoCard from '@/app/components/VideoCard';
@@ -78,23 +79,9 @@ export default function HomePage() {
       {/* Subtle grid pattern overlay */}
       <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0wIDBoNjB2NjBIMHoiLz48cGF0aCBkPSJNMzAgMzBtLTEgMGExIDEgMCAxIDAgMiAwYTEgMSAwIDEgMCAtMiAwIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIi8+PC9nPjwvc3ZnPg==')] opacity-40 pointer-events-none -z-10"></div>
       
-      <header className="bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="m-0 text-2xl font-bold bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
-            🎓 FocusEdu <span className="text-xs text-slate-500 font-normal align-bottom">by Orion Labs</span>
-          </h1>
-          <nav className="flex gap-6">
-            <Link href="/" className="text-slate-400 no-underline font-medium transition-all hover:text-white">
-              Home
-            </Link>
-            <Link href="/suggestions" className="text-white no-underline font-medium relative after:absolute after:bottom-[-4px] after:left-0 after:w-full after:h-0.5 after:bg-gradient-to-r after:from-violet-500 after:to-fuchsia-500">
-              AI Suggestions
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Navbar />
 
-      <main className="max-w-7xl mx-auto px-6 py-12 relative">
+      <main className="max-w-7xl mx-auto px-6 py-12 pt-24 relative">
         <section className="text-center mb-16">
           <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20">
             <span className="text-violet-400 text-sm font-medium">✨ AI-Powered Learning</span>
