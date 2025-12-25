@@ -515,13 +515,13 @@ export default function ResumeAnalysisPage() {
       <main className="max-w-6xl mx-auto px-6 py-12 relative">
         {/* Header */}
         <section className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 border border-violet-500/20 backdrop-blur-sm">
-            {user && (
-              <span className="text-sm text-slate-300">
+          {user && (
+            <div className="flex justify-center w-full mt-4 mb-4">
+              <span className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 border border-violet-500/20 backdrop-blur-sm text-sm text-slate-300 shadow-md">
                 Logged in as <span className="text-violet-400">{user.email}</span>
               </span>
-            )}
-          </div>
+            </div>
+          )}
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-violet-200 to-fuchsia-200 bg-clip-text text-transparent leading-tight">
             Analyze Your Resume
           </h1>
@@ -533,7 +533,7 @@ export default function ResumeAnalysisPage() {
 
         {/* Feature badges */}
         <div className="flex flex-wrap justify-center gap-3 mb-10">
-          {['RAG-Powered', 'Chroma Vector DB', 'Llama 3.1 70B', 'Real-time Analysis'].map((feature, i) => (
+          {['RAG-Powered', 'Chroma Vector DB', 'openai/gpt-oss-120b', 'Real-time Analysis'].map((feature, i) => (
             <span key={i} className="px-3 py-1 text-xs font-medium text-slate-400 bg-slate-800/50 border border-slate-700/50 rounded-full">
               {feature}
             </span>
@@ -921,43 +921,7 @@ export default function ResumeAnalysisPage() {
               </div>
             </div>
 
-            {/* Gap Analysis Results */}
-            {gapAnalysis && (
-              <div className="p-6 md:p-8 bg-slate-800/30 border border-slate-700/50 rounded-3xl">
-                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                  <span className="w-10 h-10 rounded-xl bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center">
-                    🎯
-                  </span>
-                  Gap Analysis Results
-                </h2>
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  <div className="p-4 bg-slate-900/50 rounded-xl">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-yellow-400 font-semibold">Match Score:</span>
-                      <span className={`text-2xl font-bold ${gapAnalysis.matchScore >= 70 ? 'text-emerald-400' : gapAnalysis.matchScore >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
-                        {gapAnalysis.matchScore}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-slate-900/50 rounded-xl">
-                    <div className="text-sm text-slate-400 mb-2">Missing Skills Identified</div>
-                    <div className="text-2xl font-bold text-violet-400">{gapAnalysis.missingSkills.length}</div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white mb-3">Key Missing Skills:</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {gapAnalysis.missingSkills.map((skill, i) => (
-                        <span key={i} className="px-4 py-2 text-sm text-violet-300 bg-violet-500/10 border border-violet-500/30 rounded-lg">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Gap Analysis Results section removed as per user request */}
 
             {/* Learning Plan */}
             {learningPlan && (

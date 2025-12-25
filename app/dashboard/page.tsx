@@ -178,22 +178,25 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white relative">
+      {/* Decorative gradient orbs */}
+      <div className="fixed top-1/4 -left-32 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl animate-pulse pointer-events-none z-0"></div>
+      <div className="fixed bottom-1/4 -right-32 w-96 h-96 bg-fuchsia-600/20 rounded-full blur-3xl animate-pulse pointer-events-none z-0" style={{ animationDelay: '1s' }}></div>
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-6 py-10 pt-24">
+      <main className="max-w-6xl mx-auto px-6 py-10 pt-24 relative z-10">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-          <h1 className="text-4xl font-bold">📊 Resume Dashboard</h1>
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent drop-shadow-lg">📊 Resume Dashboard</h1>
           <div className="flex items-center gap-3">
             <Link
               href="/resume-analysis"
-              className="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-lg transition-all border border-slate-600/50 text-sm font-medium"
+              className="px-4 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white rounded-xl transition-all border-0 text-sm font-semibold shadow-md hover:shadow-violet-500/20"
             >
               Resume Analysis
             </Link>
             <Link
               href="/github-analysis"
-              className="px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white rounded-lg transition-all text-sm font-medium"
+              className="px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white rounded-xl transition-all text-sm font-semibold shadow-md hover:shadow-indigo-500/20"
             >
               GitHub Analysis
             </Link>
@@ -201,15 +204,19 @@ export default function DashboardPage() {
         </div>
 
         {/* STREAK */}
-        <div className="mb-6 p-5 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl">
-          <h3 className="text-lg font-semibold">🏆 Improvement Streak</h3>
-          <p className="text-3xl font-bold">{streak()} 🔥</p>
+        <div className="mb-6 p-6 bg-gradient-to-r from-violet-600/80 to-fuchsia-600/80 rounded-2xl shadow-lg flex items-center gap-6">
+          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-violet-400/30 to-fuchsia-400/30 text-3xl">
+            🏆
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-1">Improvement Streak</h3>
+            <p className="text-3xl font-bold text-yellow-300">{streak()} <span className="text-2xl">🔥</span></p>
+          </div>
         </div>
 
         {/* TABS */}
         <div className="flex flex-wrap gap-3 mb-8">
           {[
-           
             ['grade', '🅰️ Grades'],
             ['sections', '📊 Sections'],
             ['skills', '🧠 Skills'],
@@ -219,11 +226,11 @@ export default function DashboardPage() {
             <button
               key={k}
               onClick={() => setActiveTab(k as any)}
-              className={`px-4 py-2 rounded-lg border ${
-                activeTab === k
-                  ? 'bg-violet-600 border-violet-400'
-                  : 'bg-slate-800 border-slate-700'
-              }`}
+              className={`px-5 py-2 rounded-xl border font-semibold shadow-sm transition-all duration-200 text-base focus:outline-none focus:ring-2 focus:ring-violet-500/50
+                ${activeTab === k
+                  ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 border-violet-400 text-white scale-105 shadow-violet-500/20'
+                  : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-700/80 hover:text-white'}
+              `}
             >
               {l}
             </button>
@@ -239,21 +246,24 @@ export default function DashboardPage() {
 
         {/* GRADES */}
         {activeTab === 'grade' && (
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-3 gap-6">
             {data.map((d) => (
-              <div key={d.id} className="p-5 bg-slate-900 border rounded-xl">
-                <p className="text-sm text-slate-400">
-                  {d.createdAt.toDate().toLocaleDateString()}
-                </p>
-                <p className="text-3xl font-bold">
-                  Grade {getGrade(d.overallScore)}
-                </p>
-                <button
-                  onClick={() => pinResume(d.id)}
-                  className="mt-3 px-3 py-1 bg-yellow-400 text-black rounded"
-                >
-                  📌 Pin
-                </button>
+              <div key={d.id} className="p-6 bg-slate-900/80 border border-violet-700/30 rounded-2xl shadow-md hover:shadow-violet-500/20 transition-all duration-200 group relative overflow-hidden">
+                <div className="absolute -top-4 -right-4 w-16 h-16 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 rounded-full blur-2xl z-0"></div>
+                <div className="relative z-10">
+                  <p className="text-sm text-slate-400 mb-2">
+                    {d.createdAt.toDate().toLocaleDateString()}
+                  </p>
+                  <p className="text-4xl font-extrabold mb-2 bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent drop-shadow">
+                    Grade {getGrade(d.overallScore)}
+                  </p>
+                  <button
+                    onClick={() => pinResume(d.id)}
+                    className="mt-3 px-4 py-1.5 bg-yellow-400/90 hover:bg-yellow-300 text-black rounded-full font-semibold shadow hover:scale-105 transition-all"
+                  >
+                    📌 Pin
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -261,7 +271,8 @@ export default function DashboardPage() {
 
         {/* SECTION RADAR */}
         {activeTab === 'sections' && data[0] && (
-          <div className="bg-slate-900 p-6 rounded-xl border">
+          <div className="bg-slate-900/80 p-8 rounded-2xl border border-violet-700/30 shadow-md">
+            <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">Section Breakdown</h2>
             <Radar
               data={{
                 labels: data[0].analysis.sections.map((s) => s.title),
@@ -274,64 +285,72 @@ export default function DashboardPage() {
                   },
                 ],
               }}
+              options={{
+                plugins: {
+                  legend: { labels: { color: '#a78bfa', font: { size: 16 } } },
+                },
+                scales: {
+                  r: {
+                    angleLines: { color: '#a78bfa' },
+                    grid: { color: '#a78bfa22' },
+                    pointLabels: { color: '#f3e8ff', font: { size: 14 } },
+                    ticks: { color: '#a78bfa', backdropColor: 'transparent' },
+                  },
+                },
+              }}
             />
           </div>
         )}
 
         {/* 🧠 SKILL IMPROVEMENT — FIXED */}
         {activeTab === 'skills' && (
-  <div className="space-y-4">
-    {data[0]?.analysis.sections.map((s: any) => {
-      const key = s.title.toLowerCase();
-
-      let rec = null;
-
-      if (key.includes('skill')) rec = COURSE_MAP.Skills;
-      else if (key.includes('project')) rec = COURSE_MAP.Projects;
-      else if (key.includes('experience')) rec = COURSE_MAP.Experience;
-      else if (key.includes('education')) rec = COURSE_MAP.Education;
-
-      if (!rec) return null;
-
-      const needsHelp = s.score < rec.threshold;
-
-      return (
-        <div
-          key={s.title}
-          className="p-5 bg-slate-900 border border-slate-700 rounded-xl"
-        >
-          <h3 className="text-lg font-semibold">{s.title}</h3>
-          <p className="text-sm text-slate-400 mb-2">
-            Score: {s.score} / Target: {rec.threshold}
-          </p>
-
-          {needsHelp ? (
-            <div className="flex gap-3">
-              <a
-                href={rec.youtube}
-                target="_blank"
-                className="px-3 py-1 bg-red-600 rounded"
-              >
-                ▶ YouTube
-              </a>
-              <a
-                href={rec.udemy}
-                target="_blank"
-                className="px-3 py-1 bg-purple-600 rounded"
-              >
-                🎓 Udemy
-              </a>
-            </div>
-          ) : (
-            <p className="text-green-400 text-sm">
-              ✅ Strong performance — keep going
-            </p>
-          )}
-        </div>
-      );
-    })}
-  </div>
-)}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">Skill Improvement</h2>
+            {data[0]?.analysis.sections.map((s: any) => {
+              const key = s.title.toLowerCase();
+              let rec = null;
+              if (key.includes('skill')) rec = COURSE_MAP.Skills;
+              else if (key.includes('project')) rec = COURSE_MAP.Projects;
+              else if (key.includes('experience')) rec = COURSE_MAP.Experience;
+              else if (key.includes('education')) rec = COURSE_MAP.Education;
+              if (!rec) return null;
+              const needsHelp = s.score < rec.threshold;
+              return (
+                <div
+                  key={s.title}
+                  className="p-6 bg-slate-900/80 border border-fuchsia-700/30 rounded-2xl shadow-md hover:shadow-fuchsia-500/20 transition-all duration-200 group"
+                >
+                  <h3 className="text-lg font-semibold mb-2 text-white">{s.title}</h3>
+                  <p className="text-sm text-slate-400 mb-3">
+                    Score: <span className="font-bold text-violet-400">{s.score}</span> / Target: <span className="font-bold text-fuchsia-400">{rec.threshold}</span>
+                  </p>
+                  {needsHelp ? (
+                    <div className="flex gap-3">
+                      <a
+                        href={rec.youtube}
+                        target="_blank"
+                        className="px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 rounded-lg text-white font-semibold shadow hover:scale-105 transition-all"
+                      >
+                        ▶ YouTube
+                      </a>
+                      <a
+                        href={rec.udemy}
+                        target="_blank"
+                        className="px-4 py-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 rounded-lg text-white font-semibold shadow hover:scale-105 transition-all"
+                      >
+                        🎓 Udemy
+                      </a>
+                    </div>
+                  ) : (
+                    <p className="text-emerald-400 text-sm font-semibold">
+                      ✅ Strong performance — keep going
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
 
         {/* HISTORY */}
