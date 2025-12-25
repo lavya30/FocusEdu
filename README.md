@@ -461,11 +461,7 @@ We believe in the power of community! Contributions are what make open-source am
 - 💬 Use clear, descriptive commit messages
 - 🤔 Discuss major changes in issues first
 
-### Code of Conduct
 
-Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing. We're committed to providing a welcoming and inclusive environment for everyone.
-
----
 
 ## 🧪 Testing
 
