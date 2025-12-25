@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -7,7 +8,14 @@ import Navbar from '@/app/components/Navbar';
 
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  getDoc,
+  doc,
+} from "firebase/firestore";
+
 
 interface AnalysisResult {
   overallScore: number;
@@ -230,19 +238,22 @@ export default function ResumeAnalysisPage() {
       const data = await response.json();
       setAnalysis(data);
 
-      // Save analysis to Firestore
-      await setDoc(doc(db, 'resumeAnalysis', user.uid), {
+      await addDoc(collection(db, "resumeAnalysis"), {
+        userId: user.uid,
         email: user.email,
+        overallScore: data.overallScore,
         analysis: data,
-        updatedAt: new Date(),
+        createdAt: serverTimestamp(),
       });
+
     } catch (err) {
-      setError('Failed to analyze resume. Please try again.');
       console.error(err);
+      setError("Failed to analyze resume. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-emerald-400';

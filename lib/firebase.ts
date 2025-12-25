@@ -11,14 +11,9 @@ const firebaseConfig = {
   appId: "1:694054386034:web:d3d001d6799ca3cfb085eb",
 };
 
-// ✅ Prevent multiple Firebase initializations
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// ✅ Authentication
 export const auth = getAuth(app);
+export const db = getFirestore(app); // ✅ IMPORTANT
 
-// ✅ Firestore Database (THIS WAS MISSING)
-export const db = getFirestore(app);
-
-// Optional default export
 export default app;

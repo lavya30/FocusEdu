@@ -1,3 +1,5 @@
+
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -11,6 +13,8 @@ const navLinks = [
   { name: 'About', href: '/about' },
   { name: 'Services', href: '/services' },
   { name: 'Contact', href: '/contact' },
+  {name:'Suggestions',href:'/suggestions'}
+  
 ]
 
 export default function Navbar() {
