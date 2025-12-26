@@ -25,7 +25,7 @@ const InternshipPage = () => {
   const [internships, setInternships] = useState<Internship[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('software engineering intern');
-  const [location, setLocation] = useState('');
+  // Removed location state
   const [country, setCountry] = useState('in');
   const [isRemoteOnly, setIsRemoteOnly] = useState(false);
 
@@ -33,12 +33,12 @@ const InternshipPage = () => {
     setLoading(true);
     try {
       const searchTerm = query.toLowerCase().includes('intern') ? query : `${query} intern`;
-      const locationParam = location ? `&location=${encodeURIComponent(location)}` : '';
+      // Removed locationParam
       const remoteParam = isRemoteOnly ? '&remote_jobs_only=true' : '';
       const countryParam = country ? `&country=${country}` : '';
       
       const response = await fetch(
-        `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(searchTerm)}${locationParam}${remoteParam}${countryParam}&page=1&num_pages=3`,
+        `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(searchTerm)}${remoteParam}${countryParam}&page=1&num_pages=3`,
         {
           method: 'GET',
           headers: {
@@ -128,17 +128,7 @@ const InternshipPage = () => {
               />
             </div>
             
-            {/* Location Input */}
-            <div className="md:w-64 relative">
-              <FiMapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-xl" />
-              <input 
-                type="text"
-                placeholder="Location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20 transition-all"
-              />
-            </div>
+            {/* Location Input removed */}
             
             {/* Search Button */}
             <button
