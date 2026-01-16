@@ -39,7 +39,6 @@ const calculateSkillMismatch = (
     else claimedNotUsed.push(skill);
   });
 
-  
   githubSet.forEach(skill => {
     if (!resumeSet.has(skill)) usedNotClaimed.push(skill);
   });
