@@ -11,8 +11,6 @@ import { db } from "@/lib/firebase";
 
 
 
-
-
 const LoginPage = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
