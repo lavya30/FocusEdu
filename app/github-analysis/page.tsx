@@ -72,7 +72,6 @@ const fetchLatestResumeSkills = async (userId: string): Promise<string[]> => {
   return doc.analysis?.skills || [];
 };
 
-
 /* ================= TYPES ================= */
 
 interface GitHubAnalysisResult {
